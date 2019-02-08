@@ -2,7 +2,7 @@ const process = require('process')
 const fs = require('fs')
 const { encodeObject, decodeObject, Multiplexer } = require('omnistreams')
 const { ReadStreamAdapter, WriteStreamAdapter } = require('omnistreams-node-adapter')
-const { MapConduit, Splitter } = require('omnistreams-conduit')
+const { MapConduit, FanOutConduit, Splitter } = require('omnistreams-conduit')
 
 //const fileReadStream = fs.createReadStream('in.bam')
 //const fileWriteStream1 = fs.createWriteStream('out1.bam')
@@ -22,10 +22,7 @@ const { MapConduit, Splitter } = require('omnistreams-conduit')
 //
 //producer.pipe(splitter)
 
-const conduit = new MapConduit((data) => data.val*data.val)
-
-conduit.setEncodeFunc(encodeObject)
-conduit.setDecodeFunc(decodeObject)
+const conduit = new FanOutConduit()
 
 let index = 0
 const messages = [
@@ -39,18 +36,40 @@ const messages = [
 ]
 
 
-conduit.onRequest((numElements) => {
-  if (index < messages.length) {
-    conduit.write(messages[index++])
-    conduit.request(1)
+const consumers = []
+for (let i = 0; i < 3; i++) {
+  const consumer = {
+    index: i,
+    onRequest: function(callback) {
+      this._requestCallback = callback
+    },
   }
-})
+  consumers.push(consumer)
 
-conduit.onData((data) => {
-  console.log(data)
-})
+  conduit.addConsumer(consumer)
+}
 
-conduit.request(1)
+consumers[0]._requestCallback(1)
+consumers[0]._requestCallback(1)
+consumers[0]._requestCallback(1)
+
+consumers[0]._requestCallback(1)
+consumers[0]._requestCallback(1)
+consumers[0]._requestCallback(1)
+
+consumers[0]._requestCallback(1)
+consumers[0]._requestCallback(1)
+consumers[0]._requestCallback(1)
+
+
+conduit.onRequest((numElements) => {
+})
+//
+//conduit.onData((data) => {
+//  console.log(data)
+//})
+//
+//conduit.request(1)
 
 //
 //producer.onData((data) => {

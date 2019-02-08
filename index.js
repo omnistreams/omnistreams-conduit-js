@@ -1,3 +1,51 @@
+class FanOutConduit {
+  constructor() {
+    this._consumers = []
+    this._demand = 0
+    this._consumerIndex = 0
+  }
+
+  addConsumer(consumer) {
+    this._consumers.push({
+      consumer,
+      demand: 0,
+    })
+
+    const consumerIndex = this._consumers.length - 1
+
+    consumer.onRequest((numElements) => {
+      this._demand += numElements
+      this._consumers[consumerIndex].demand += numElements
+
+      this._flush()
+    })
+  }
+
+  onRequest(callback) {
+    this._requestCallback = callback
+  }
+
+  _flush() {
+    for (const consumer of this._iterConsumers()) {
+      console.log(consumer)
+      break
+    }
+  }
+
+  *_iterConsumers() {
+    const index = this._consumerIndex
+    for (let i = index; i < this._consumers.length; i++) {
+      this._consumerIndex++
+      yield this._consumers[i]
+    }
+    for (let i = 0; i < index; i++) {
+      this._consumerIndex++
+      yield this._consumers[i]
+    }
+  }
+}
+
+
 class MapConduit {
   constructor(mapFunc) {
     //this._mapFunc = (data) => {
@@ -121,5 +169,6 @@ class Splitter {
 
 module.exports = {
   MapConduit,
+  FanOutConduit,
   Splitter,
 }
