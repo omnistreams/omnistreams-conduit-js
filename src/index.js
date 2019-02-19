@@ -1,3 +1,6 @@
+const { BufferConduit } = require('./buffer_conduit')
+
+
 class FanOutConduit {
   constructor() {
     this._consumers = []
@@ -168,6 +171,7 @@ class Splitter {
 }
 
 module.exports = {
+  BufferConduit,
   MapConduit,
   FanOutConduit,
   Splitter,
