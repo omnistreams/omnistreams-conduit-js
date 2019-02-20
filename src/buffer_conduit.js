@@ -1,5 +1,6 @@
 class BufferConduit {
   constructor(bufferSize) {
+    this._ended = false
     this._terminated = false
     this._downstreamDemand = 0
     this._buffered = []
@@ -16,6 +17,13 @@ class BufferConduit {
       this._dataCallback(this._buffered.shift())
       this._downstreamDemand--
       this._requestCallback(1)
+    }
+    
+    if (this._ended && this._buffered.length === 0) {
+      if (this._pipee) {
+        this._pipee.end()
+      }
+      this._endCallback()
     }
   }
 
@@ -39,7 +47,6 @@ class BufferConduit {
   write(data) {
     if (this._buffered.length < this._bufferSize) {
       this._buffered.push(data)
-      this._requestCallback(1)
     }
     else {
       throw new Error("BufferConduit: Attempt to write more than requested")
@@ -49,10 +56,9 @@ class BufferConduit {
   }
 
   end() {
-    if (this._pipee) {
-      this._pipee.end()
-    }
-    this._endCallback()
+    this._ended = true
+
+    this._flush()
   }
 
   onRequest(callback) {

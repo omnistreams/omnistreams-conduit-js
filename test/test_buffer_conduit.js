@@ -60,6 +60,21 @@ describe('BufferConduit', function() {
     }).to.throw("BufferConduit: Attempt to write more than requested")
   })
 
+  it("only emits request when not buffering", function() {
+    const buf = new BufferConduit(3)
+
+    let numRequested = 0
+    buf.onRequest((numItems) => {
+      numRequested += numItems
+    })
+
+    buf.write(new Uint8Array(1))
+    buf.write(new Uint8Array(1))
+    buf.write(new Uint8Array(1))
+
+    expect(numRequested).to.equal(3)
+  })
+  
   it('passes data through', function() {
     const buf = new BufferConduit(3)
     const expected = [
@@ -82,15 +97,36 @@ describe('BufferConduit', function() {
     expect(observed).to.eql(expected)
   })
 
-  it('can be ended', function(done) {
-    this.timeout(10)
-    const buf = new BufferConduit(1)
+  describe("end", function() {
 
-    buf.onEnd(() => {
-      done()
+    it('can be ended', function(done) {
+      this.timeout(10)
+      const buf = new BufferConduit(1)
+
+      buf.onEnd(() => {
+        done()
+      })
+
+      buf.end()
     })
 
-    buf.end()
+    it("doens't end until data flush", function() {
+      const buf = new BufferConduit(1)
+
+      let endCalled = false
+      buf.onEnd(() => {
+        endCalled = true
+      })
+
+      buf.write(new Uint8Array([1,2,3]))
+      buf.end()
+
+      expect(endCalled).to.equal(false)
+
+      buf.request(1)
+
+      expect(endCalled).to.equal(true)
+    })
   })
 
   it('can be terminated', function(done) {
