@@ -15,5 +15,6 @@ const producer = new ReadStreamAdapter({
 const buffer = new BufferConduit(100)
 const consumer = new UnbufferedWriteStreamAdapter(fileWriteStream)
 
-producer.pipe(buffer)
-buffer.pipe(consumer)
+producer
+  .pipe(buffer)
+  .pipe(consumer)
